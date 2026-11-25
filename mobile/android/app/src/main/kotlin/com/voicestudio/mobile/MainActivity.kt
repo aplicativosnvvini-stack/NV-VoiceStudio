@@ -62,7 +62,7 @@ class MainActivity:ComponentActivity() {
         super.onCreate(savedInstanceState);enableEdgeToEdge()
         incoming=intent
         val l=L10n.load(this,L10n.preferredSystemLocale(Locale.getDefault().toLanguageTag()))
-        val shortcuts=listOf("speak","dictate").map {route ->
+        val shortcuts=listOf("speak").map {route ->
             ShortcutInfo.Builder(this,route).setShortLabel(l.t("mobile.integration.shortcut_$route"))
                 .setIcon(Icon.createWithResource(this,android.R.drawable.ic_btn_speak_now))
                 .setIntent(Intent(Intent.ACTION_VIEW,Uri.parse("voicestudio://workspace/$route"),this,MainActivity::class.java)).build()
@@ -70,7 +70,7 @@ class MainActivity:ComponentActivity() {
         // Publishing shortcuts writes to disk (@WorkerThread), so keep it off the main thread.
         val manager=getSystemService(ShortcutManager::class.java)
         lifecycleScope.launch(Dispatchers.IO) {manager.dynamicShortcuts=shortcuts}
-        setContent {StudioApp(incomingIntent=incoming,onIncomingConsumed={incoming=null})}
+        setContent {LiteApp(incomingIntent=incoming,onIncomingConsumed={incoming=null})}
     }
 }
 
