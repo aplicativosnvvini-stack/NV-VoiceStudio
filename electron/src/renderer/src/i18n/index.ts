@@ -52,10 +52,11 @@ function initialLocale(): AppLocale {
   if (typeof navigator !== 'undefined') {
     for (const candidate of navigator.languages || [navigator.language]) {
       const locale = normalizeLocale(candidate);
-      if (locale) return locale;
+      if (locale === 'pt' || locale === 'es') return locale;
     }
   }
-  return 'en';
+  // Prefer Portuguese on first launch; preserve explicitly selected languages.
+  return 'pt';
 }
 
 async function loadLocale(locale: AppLocale): Promise<void> {
