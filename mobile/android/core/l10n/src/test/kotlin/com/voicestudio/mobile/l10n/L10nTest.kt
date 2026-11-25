@@ -6,6 +6,12 @@ import org.junit.Test
 
 class L10nTest {
     private fun obj(value:String)=Json.parseToJsonElement(value).jsonObject
+    @Test fun nvSystemLocaleDefaultsToPortugueseAndRecognizesSpanish() {
+        assertEquals("pt", L10n.preferredSystemLocale("en-US"))
+        assertEquals("pt", L10n.preferredSystemLocale("pt-BR"))
+        assertEquals("es", L10n.preferredSystemLocale("es-CU"))
+        assertEquals("es", L10n.preferredSystemLocale("es-419"))
+    }
     @Test fun nestedInterpolationPluralAndFallback() {
         val catalogs=mapOf("en" to obj("""{"greeting":"Hello {{name}}", "count_one":"{{count}} item", "count_other":"{{count}} items", "nested":{"label":"English"}}"""),"fr" to obj("""{"nested":{"label":"French"}}"""),"fr-CA" to obj("""{"greeting":"Bonjour {{name}}"}"""))
         val l=L10n(catalogs,"fr-CA")

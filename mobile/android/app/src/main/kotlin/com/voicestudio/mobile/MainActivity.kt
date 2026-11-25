@@ -61,7 +61,7 @@ class MainActivity:ComponentActivity() {
         setTheme(R.style.AppTheme)
         super.onCreate(savedInstanceState);enableEdgeToEdge()
         incoming=intent
-        val l=L10n.load(this,Locale.getDefault().toLanguageTag())
+        val l=L10n.load(this,L10n.preferredSystemLocale(Locale.getDefault().toLanguageTag()))
         val shortcuts=listOf("speak","dictate").map {route ->
             ShortcutInfo.Builder(this,route).setShortLabel(l.t("mobile.integration.shortcut_$route"))
                 .setIcon(Icon.createWithResource(this,android.R.drawable.ic_btn_speak_now))
@@ -97,7 +97,7 @@ fun contentReportClient()=ContentReportClient(BuildConfig.CONTENT_REPORTS_URL,Bu
     val diagnostics by AutomaticDiagnostics.state.collectAsStateWithLifecycle()
     val context=LocalContext.current
     val configuration=LocalConfiguration.current
-    val locale=if(prefs.locale=="system") configuration.locales[0].toLanguageTag() else prefs.locale
+    val locale=if(prefs.locale=="system") L10n.preferredSystemLocale(configuration.locales[0].toLanguageTag()) else prefs.locale
     val l=remember(locale) {L10n.load(context,locale)}
     val dark=when(prefs.mode) {"light" -> false;"system" -> (configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES;else -> true}
     val chrome=Color(VSTheme.roles(if(dark) prefs.darkPalette else prefs.lightPalette,dark).getValue("chrome")).toArgb()

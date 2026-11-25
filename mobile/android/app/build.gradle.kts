@@ -55,7 +55,7 @@ android {
     ndkVersion = "27.1.12297006"
     defaultConfig {
         // Store identity (voicestudio.sh); the Kotlin namespace stays com.voicestudio.mobile.
-        applicationId = "sh.voicestudio.mobile"
+        applicationId = "br.com.nv.voicestudio"
         minSdk = 29
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
         targetSdk = 36
@@ -123,8 +123,7 @@ val bundleCatalogs by tasks.registering {
         contracts.resolve("support.json").copyTo(assets.resolve("support.json"), overwrite = true)
         contracts.resolve("support-artwork").copyRecursively(assets.resolve("support-artwork"), overwrite = true)
         contracts.resolve("tokens.json").copyTo(assets.resolve("tokens.json"), overwrite = true)
-        val en = JsonSlurper().parse(catalogs.resolve("en.json")) as Map<*, *>
-        val label = (en["app"] as Map<*, *>)["name"].toString()
+        val label = "NV Voice Studio"
         val res = layout.buildDirectory.dir("generated/catalogResources/values").get().asFile.apply { mkdirs() }
         res.resolve("strings.xml").writeText("<resources><string name=\"app_name\">$label</string></resources>")
     }
