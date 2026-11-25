@@ -102,6 +102,13 @@ import java.io.File
             }
             phone.progress?.let {p ->
                 LinearProgressIndicator(progress={p},modifier=Modifier.fillMaxWidth().semantics {contentDescription=progressLabel})
+                val stage=when {
+                    p<.25f -> "mobile.android.sample_ready"
+                    p<.5f -> "mobile.simple.asr"
+                    else -> "mobile.simple.clone"
+                }
+                Text(tr(stage),color=role("textMuted"))
+                if(p>=.5f&&p<1f) LinearProgressIndicator(modifier=Modifier.fillMaxWidth())
             }
             if(state.busy) LinearProgressIndicator(modifier=Modifier.fillMaxWidth().semantics {contentDescription=progressLabel})
             Secondary("common.cancel",!recording) {vm.phone.cancelInference();vm.cancelClone();cloning=false;sample?.let {File(it).delete()};sample=null;onCancel()}
