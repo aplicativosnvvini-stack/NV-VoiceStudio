@@ -80,6 +80,28 @@ class PhoneVoicesTest {
         assertTrue(store.preview(voice).readBytes().toString(Charsets.ISO_8859_1).contains("VoiceStudio synthetic audio"))
         assertFalse(File(root,voice.id+"/reference.wav").readBytes().toString(Charsets.ISO_8859_1).contains("VoiceStudio synthetic audio"))
     }
+    @Test fun shortPreviewRetainsFullPortugueseAndSpanishReferences()=runTest {
+        val transcripts=listOf(
+            "Olá hoje estou gravando esta mensagem para testar a minha voz no aplicativo sem perder a gravação original.",
+            "Hola hoy estoy grabando este mensaje para probar mi voz en la aplicación sin perder la grabación original."
+        )
+        for((index,transcript) in transcripts.withIndex()) {
+            val store=PhoneVoiceStore(File(temporary.root,"voices-$index"))
+            val engine=object: FakeLocalEngine() {
+                override suspend fun transcribe(model: PhoneModel,audio: LocalAudio,progress: (Float)->Unit)=transcript
+                override suspend fun clone(model: PhoneModel,text: String,reference: LocalAudio,referenceText: String,progress: (Float)->Unit): LocalAudio {
+                    assertEquals(transcript,referenceText)
+                    assertEquals(transcript.split(" ").take(8).joinToString(" "),text)
+                    assertTrue(text.length<transcript.length)
+                    assertArrayEquals(audio.samples,reference.samples,0f)
+                    return LocalAudio(FloatArray(2400) {.1f},24000)
+                }
+            }
+            val voice=store.create("Voice",File("unused"),true,fixtureModel(),fixtureModel("clone"),engine,decoder)
+            assertEquals(transcript,voice.transcript)
+            assertArrayEquals(audio.samples,store.reference(voice).samples,0f)
+        }
+    }
     @Test fun resamplingKeepsPhaseAcrossOddBufferSizes() {
         val input=FloatArray(44100) {kotlin.math.sin(it*.05).toFloat()}
         val once=MonoResampler(44100,24000).accept(input)
