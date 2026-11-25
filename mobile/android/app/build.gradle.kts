@@ -55,9 +55,9 @@ android {
     ndkVersion = "27.1.12297006"
     defaultConfig {
         // Store identity (voicestudio.sh); the Kotlin namespace stays com.voicestudio.mobile.
-        applicationId = "br.com.nv.voicestudio"
+        applicationId = "br.com.nv.voicelite"
         minSdk = 29
-        ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
+        ndk { abiFilters += listOf("arm64-v8a") }
         targetSdk = 36
         versionCode = appVersionCode
         versionName = appVersion
@@ -115,7 +115,12 @@ val bundleCatalogs by tasks.registering {
         repository.resolve("LICENSE").copyTo(assets.resolve("licenses/VoiceStudio-AGPL-3.0.txt"), overwrite=true)
         catalogs.listFiles()!!.filter { it.extension == "json" }.forEach { it.copyTo(out.resolve(it.name), overwrite = true) }
         contracts.listFiles()!!.filter { it.name.startsWith("strings") && it.name.endsWith(".en.json") }.forEach { it.copyTo(assets.resolve(it.name), overwrite = true) }
-        contracts.resolve("models.json").copyTo(assets.resolve("models.json"), overwrite = true)
+        val liteCatalog = (JsonSlurper().parse(contracts.resolve("models.json")) as Map<*, *>).toMutableMap()
+        val liteIds = setOf("omnivoice-q4-k-m", "whisper-tiny-int8", "whisper-base-int8")
+        @Suppress("UNCHECKED_CAST")
+        val models = liteCatalog["models"] as List<Map<String, Any>>
+        val filteredCatalog = mapOf("schema_version" to liteCatalog["schema_version"], "models" to models.filter { it["id"] in liteIds })
+        assets.resolve("models.json").writeText(groovy.json.JsonOutput.toJson(filteredCatalog))
         contracts.resolve("tts").copyRecursively(assets.resolve("tts"), overwrite=true)
         contracts.resolve("design.json").copyTo(assets.resolve("design.json"), overwrite = true)
         contracts.resolve("community-gallery.json").copyTo(assets.resolve("community-gallery.json"), overwrite = true)
@@ -123,7 +128,7 @@ val bundleCatalogs by tasks.registering {
         contracts.resolve("support.json").copyTo(assets.resolve("support.json"), overwrite = true)
         contracts.resolve("support-artwork").copyRecursively(assets.resolve("support-artwork"), overwrite = true)
         contracts.resolve("tokens.json").copyTo(assets.resolve("tokens.json"), overwrite = true)
-        val label = "NV Voice Studio"
+        val label = "NV Voice Lite"
         val res = layout.buildDirectory.dir("generated/catalogResources/values").get().asFile.apply { mkdirs() }
         res.resolve("strings.xml").writeText("<resources><string name=\"app_name\">$label</string></resources>")
     }
