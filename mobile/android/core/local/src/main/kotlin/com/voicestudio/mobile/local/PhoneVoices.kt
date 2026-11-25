@@ -24,6 +24,15 @@ internal fun atomicText(file: File, text: String) {
 /** [modelRepo]/[modelRevision] name the model that made the voice, for reports; older voices have none. */
 @Serializable data class PhoneVoice(val id: String, val name: String, val transcript: String, val createdAt: Long, val consentAt: Long, val sampleRate: Int = 24000,
     val modelRepo: String? = null, val modelRevision: String? = null, val designInstruction: String? = null, val designSeed: Long? = null,val sourceAttribution: Map<String,String>?=null)
+/** Limit validation speech to a short prefix in the reference language (including Portuguese and Spanish). */
+internal fun clonePreviewText(transcript:String):String {
+    val text=transcript.trim()
+    val prefix=text.split(Regex("\\s+")).take(8).joinToString(" ")
+    if(prefix.length<=80) return prefix
+    val bounded=prefix.take(80).trimEnd()
+    val boundary=bounded.lastIndexOf(' ')
+    return if(boundary>0) bounded.substring(0,boundary) else bounded.dropLast(if(bounded.last().isHighSurrogate()) 1 else 0)
+}
 /** One atomic metadata publication after ASR + reference writes. No user paths. */
 class PhoneVoiceStore(private val root: File) {
     private val mutex=Mutex()
@@ -62,10 +71,13 @@ class PhoneVoiceStore(private val root: File) {
         val dir=directory(id).apply {mkdirs()}
         try {
             val audio=decoder.decode(source,File(dir,"reference.pcm"),30) {progress(it*.25f)}
-            val transcript=engine.transcribe(asr,audio.read(0,audio.frames.toInt())) {progress(.25f+it*.25f)}.trim()
+            val reference=audio.read(0,audio.frames.toInt())
+            val transcript=engine.transcribe(asr,reference) {progress(.25f+it*.25f)}.trim()
             if(transcript.isEmpty()) throw ClientFailure("mobile.simple.no_speech")
-            writeReferenceWave(audio.read(0,audio.frames.toInt()),File(dir,"reference.wav"))
-            val preview=engine.clone(cloneModel,transcript,audio.read(0,audio.frames.toInt()),transcript) {progress(.5f+it*.5f)}
+            writeReferenceWave(reference,File(dir,"reference.wav"))
+            // A brief preview validates the clone without synthesizing the full reference transcript.
+            // Preserve the complete reference and transcript for later text-to-speech.
+            val preview=engine.clone(cloneModel,clonePreviewText(transcript),reference,transcript) {progress(.5f+it*.5f)}
             require(preview.sampleRate>0&&preview.samples.isNotEmpty()&&preview.samples.all {it.isFinite()})
             markSynthetic(preview,File(dir,"preview.wav"))
             currentCoroutineContext().ensureActive()
