@@ -44,6 +44,11 @@ class L10n(private val catalogs: Map<String, JsonObject>, val locale: String) {
         private fun merge(a: JsonObject, b: JsonObject): JsonObject = JsonObject(a.toMutableMap().apply {
             b.forEach { (key, value) -> this[key] = if(value is JsonObject && this[key] is JsonObject) merge(this[key] as JsonObject, value) else value }
         })
+        // NV defaults to Brazilian Portuguese; Spanish system locales remain Spanish.
+        // Explicit app-language choices continue to use the original catalog list.
+        fun preferredSystemLocale(locale: String): String {
+            return if (Locale.forLanguageTag(locale.replace('_', '-')).language == "es") "es" else "pt"
+        }
         internal fun normalizeLocale(locale: String): String {
             val parsed = Locale.forLanguageTag(locale.replace('_', '-'))
             if(parsed.language == "zh") {
